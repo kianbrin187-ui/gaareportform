@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAA Referee's Official Report</title>
+<style>
+:root{
+  --primary:#005274;--primary-dark:#003c57;--bg:#f5f7fa;--card:#fff;
+  --border:#d0d4dc;--accent:#e3edf5;--muted:#6b7280;--danger:#9f1239;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:#111827}
+.nav{background:var(--primary);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.03em}
+.nav-logo img{height:32px}
+.nav a{color:#e5f3ff;text-decoration:none;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:4px}
+.nav a:hover{background:rgba(255,255,255,.12)}
+.container{max-width:1180px;margin:24px auto;padding:0 16px 32px}
+.card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:20px 22px;margin-bottom:18px;box-shadow:0 4px 10px rgba(15,23,42,.06)}
+.card-header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}
+h1,h2,h3{margin:0;color:var(--primary)}
+h1{font-size:1.55rem} h2{font-size:1.3rem} h3{font-size:1.1rem}
+.subtitle{font-size:.85rem;color:var(--muted)}
+.instructions{background:#f8fafc;border-left:4px solid var(--primary);padding:12px 15px;line-height:1.5}
+.notice{background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:10px 12px;margin-top:12px}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.col-2{flex:1 1 calc(50% - 8px);min-width:260px}.col-3{flex:1 1 calc(33.33% - 11px);min-width:210px}.col-1{flex:1 1 100%}
+label{display:block;font-size:.9rem;font-weight:600;margin-top:10px;margin-bottom:4px;color:#374151}
+input,select,textarea{width:100%;padding:8px 9px;font-size:.9rem;border-radius:6px;border:1px solid #cbd5e1;background:#f9fafb}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 1px rgba(0,82,116,.2)}
+textarea{min-height:95px;resize:vertical}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+th,td{border:1px solid #d1d5db;padding:6px 8px;text-align:left;vertical-align:middle}
+th{background:var(--accent);font-weight:600;color:#1f2937}
+.small-input{width:100%;padding:5px 6px;font-size:.8rem}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:.85rem;cursor:pointer;color:#111827}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-primary:hover{background:var(--primary-dark)}
+.btn-danger{color:var(--danger)}
+.btn-ghost{background:transparent}
+.btn+.btn{margin-left:6px}.section-actions{margin-top:4px}
+.hidden{display:none}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin:8px 0}
+.checkbox-row input{width:auto}
+.checklist{display:grid;gap:12px}
+.check-item{border:1px solid var(--border);border-radius:7px;padding:10px;background:#fafafa}
+.check-item label{margin:0 0 5px}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.settings-box{background:#f1f5f9;border-radius:8px;padding:12px 14px;border:1px solid var(--border)}
+.settings-box label{margin-top:0}
+#reportJson{min-height:150px;font-family:monospace;font-size:.8rem}
+.small-note{font-size:.78rem;color:var(--muted);margin-top:4px}
+@media(max-width:700px){.col-2,.col-3{min-width:100%;flex-basis:100%}.nav{gap:8px}}
+@media print{
+ .nav,.btn,#reportJson,.no-print{display:none!important}
+ body{background:#fff}.container{margin:0;max-width:none;padding:0 10mm}
+ .card{box-shadow:none;border-radius:0;border:none;padding:6mm 0;margin:0}
+ input,select,textarea{border:1px solid #999;background:#fff}
+ textarea{min-height:60px}
+}
+</style>
+<script>
+const model={
+ teams:["Team A","Team B","Team C"],
+ venues:["Venue A","Venue B","Venue C"],
+ competitions:["HE GAA"],
+ rounds:["Round 1","Round 2","Semi-Final","Final"],
+ countyBoards:["County / Board"],
+ referees:["Referee 1","Referee 2"],
+ cardTypes:["Yellow","Black","Red"],
+ infractions:["Category I","Category II","Category III","Category IV","Category V","Category VI"],
+ officialRoles:["Linesmen","Sideline Official","Goal Umpires"]
+};
+
+function showPage(id){
+ document.getElementById("reportPage").classList.add("hidden");
+ document.getElementById("settingsPage").classList.add("hidden");
+ document.getElementById(id).classList.remove("hidden");
+}
+function parseList(v){return v.split(",").map(x=>x.trim()).filter(Boolean)}
+function updateModel(field,v){model[field]=parseList(v);renderDynamicUI()}
+function configuredSelect(values,id,placeholder="",value=""){
+ const s=document.createElement("select"); if(id)s.id=id;
+ if(placeholder){const o=document.createElement("option");o.value="";o.textContent=placeholder;s.appendChild(o)}
+ values.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)});
+ if(value && values.includes(value)) s.value=value;
+ return s;
+}
+function replaceWithSelect(id,values){
+ const old=document.getElementById(id); if(!old)return;
+ const value=old.value||"";
+ const s=configuredSelect(values,id,"",value);
+ old.replaceWith(s);
+}
+function refreshConfiguredFields(){
+ replaceWithSelect("venue",model.venues);
+ replaceWithSelect("competition",model.competitions);
+ replaceWithSelect("round",model.rounds);
+ replaceWithSelect("countyBoard",model.countyBoards);
+ replaceWithSelect("refereeName",model.referees);
+}
+
+function teamSelect(name){
+ const s=document.createElement("select");s.name=name;
+ model.teams.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;s.appendChild(o)});
+ return s;
+}
+function optionSelect(values,cls="small-input"){
+ const s=document.createElement("select");s.className=cls;
+ values.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)});
+ return s;
+}
+
+function renderTeamDropdowns(){
+ const h=document.getElementById("homeTeamContainer"),a=document.getElementById("awayTeamContainer");
+ const hv=h.querySelector("select")?.value||model.teams[0], av=a.querySelector("select")?.value||model.teams[1]||model.teams[0];
+ h.innerHTML="";a.innerHTML="";
+ const hs=teamSelect("home_team"),as=teamSelect("away_team");hs.value=hv;as.value=av;h.appendChild(hs);a.appendChild(as);
+}
+function renderOfficialsTable(){
+ const body=document.getElementById("officialsTableBody"), old=[...body.querySelectorAll("tr")].map(tr=>[...tr.querySelectorAll("input")].map(x=>x.value));
+ body.innerHTML="";
+ model.officialRoles.forEach((role,i)=>{
+   const tr=document.createElement("tr");
+   const roleTd=document.createElement("td");roleTd.textContent=role;tr.appendChild(roleTd);
+   for(let j=0;j<(role==="Goal Umpires"?2:2);j++){const td=document.createElement("td");const inp=document.createElement("input");inp.value=old[i]?.[j]||"";td.appendChild(inp);tr.appendChild(td)}
+   body.appendChild(tr);
+ });
+}
+function addRow(tbodyId,cells,remove=true){
+ const tr=document.createElement("tr");
+ cells.forEach(c=>{const td=document.createElement("td");td.appendChild(c);tr.appendChild(td)});
+ if(remove){const td=document.createElement("td");const b=document.createElement("button");b.type="button";b.className="btn btn-ghost btn-danger";b.textContent="✕ Remove";b.onclick=()=>tr.remove();td.appendChild(b);tr.appendChild(td)}
+ document.getElementById(tbodyId).appendChild(tr);return tr;
+}
+function input(cls="small-input"){const i=document.createElement("input");i.className=cls;return i}
+
+function addSubRow(team, data={}){
+ const cells=[input(),input(),input()];
+ cells[0].value=data.on||"";cells[1].value=data.off||"";cells[2].value=data.notes||"";
+ cells.forEach(x=>x.placeholder=team==="A"?"Player":"Player");
+ addRow(team==="A"?"subsATableBody":"subsBTableBody",cells);
+}
+function addBloodRow(team,data={}){
+ const cells=[input(),input()];
+ cells[0].value=data.player||"";cells[1].value=data.time||"";
+ addRow(team==="A"?"bloodATableBody":"bloodBTableBody",cells);
+}
+function addCardRow(data={}){
+ const p=input(),c=input(),r=input(),n=input(),s=optionSelect(model.cardTypes);
+ p.value=data.player||"";c.value=data.club||"";r.value=data.reason||"";n.value=data.notes||"";
+ if(data.type)s.value=data.type;
+ addRow("cardsTableBody",[p,c,s,r,n]);
+}
+function addSentOffRow(data={}){
+ const p=input(),c=input(),s=optionSelect(model.infractions);
+ p.value=data.player||"";c.value=data.club||"";if(data.infraction)s.value=data.infraction;
+ addRow("sentOffTableBody",[p,c,s]);
+}
+function addInjuryRow(data={}){
+ const p=input(),c=input(),n=input();p.value=data.player||"";c.value=data.club||"";n.value=data.injury||"";
+ addRow("injuriesTableBody",[p,c,n]);
+}
+function renderDynamicUI(){renderTeamDropdowns();renderOfficialsTable();refreshConfiguredFields()}
+
+function val(sel){return document.querySelector(sel)?.value||""}
+function collectRows(id,mapper){
+ return [...document.querySelectorAll("#"+id+" tr")].map(mapper);
+}
+function collectReport(){
+ const r={
+  homeTeam:val("#homeTeamContainer select"),awayTeam:val("#awayTeamContainer select"),
+  competition:val("#competition"),round:val("#round"),venue:val("#venue"),date:val("#matchDate"),
+  throwIn:val("#throwIn"),teamATookField:val("#teamATookField"),teamBTookField:val("#teamBTookField"),
+  name:val("#refereeName"),address:val("#refereeAddress"),
+  countyBoard:val("#countyBoard"),
+  matchStartedAt:val("#matchStartedAt"),matchEndedAt:val("#matchEndedAt"),
+  officials:{linesmen:[],sidelineOfficial:"",goalUmpires:[]},
+  scores:{homeGoals:val("#homeGoals"),homePoints:val("#homePoints"),awayGoals:val("#awayGoals"),awayPoints:val("#awayPoints")},
+  substitutions:{teamA:[],teamB:[]},bloodSubs:{teamA:[],teamB:[]},
+  sentOff:[],cautioned:[],injuries:[],additionalComments:val("#additionalComments"),
+  checklist:{delay:val("#delay"),jerseys:val("#jerseys"),pitch:val("#pitch"),sidelineReport:val("#sidelineReport"),stewarding:val("#stewarding")},
+  signature:val("#signature"),reportDate:val("#reportDate")
+ };
+ [...document.querySelectorAll("#officialsTableBody tr")].forEach(tr=>{
+   const role=tr.cells[0].textContent;const ins=[...tr.querySelectorAll("input")].map(x=>x.value);
+   if(role==="Linesmen")r.officials.linesmen=ins;
+   else if(role==="Sideline Official")r.officials.sidelineOfficial=ins[0]||"";
+   else if(role==="Goal Umpires")r.officials.goalUmpires=ins;
+ });
+ r.cards=collectRows("cardsTableBody",tr=>{const x=tr.querySelectorAll("input"),s=tr.querySelector("select");return{player:x[0].value,club:x[1].value,type:s?.value||"",reason:x[2].value,notes:x[3].value}});
+ r.sentOff=collectRows("sentOffTableBody",tr=>{const x=tr.querySelectorAll("input"),s=tr.querySelector("select");return{player:x[0].value,club:x[1].value,infraction:s?.value||""}});
+ r.cautioned=collectRows("cautionedTableBody",tr=>{const x=tr.querySelectorAll("input");return{player:x[0].value,club:x[1].value,infraction:x[2].value}});
+ r.injuries=collectRows("injuriesTableBody",tr=>{const x=tr.querySelectorAll("input");return{player:x[0].value,club:x[1].value,injury:x[2].value}});
+ ["A","B"].forEach(t=>{
+   r.substitutions["team"+t]=collectRows("subs"+t+"TableBody",tr=>{const x=tr.querySelectorAll("input");return{on:x[0].value,off:x[1].value,notes:x[2].value}});
+   r.bloodSubs["team"+t]=collectRows("blood"+t+"TableBody",tr=>{const x=tr.querySelectorAll("input");return{player:x[0].value,time:x[1].value}});
+ });
+ return r;
+}
+function clearAndAdd(id,arr,fn){document.getElementById(id).innerHTML="";(arr||[]).forEach(fn)}
+function saveReportToJson(){document.getElementById("reportJson").value=JSON.stringify(collectReport(),null,2)}
+function loadReportFromJson(){
+ try{
+  const r=JSON.parse(document.getElementById("reportJson").value);
+  renderDynamicUI(); refreshConfiguredFields();
+  const set=(id,v)=>{const e=document.querySelector(id);if(e)e.value=v??""};
+  set("#homeTeamContainer select",r.homeTeam);set("#awayTeamContainer select",r.awayTeam);
+  ["competition","round","venue","matchDate","throwIn","teamATookField","teamBTookField","refereeName","refereeAddress","countyBoard","matchStartedAt","matchEndedAt","homeGoals","homePoints","awayGoals","awayPoints","additionalComments","delay","jerseys","pitch","sidelineReport","stewarding","signature","reportDate"].forEach(k=>set("#"+k,r[k]));
+  clearAndAdd("cardsTableBody",r.cards,addCardRow);clearAndAdd("sentOffTableBody",r.sentOff,addSentOffRow);
+  clearAndAdd("injuriesTableBody",r.injuries,addInjuryRow);
+  clearAndAdd("cautionedTableBody",r.cautioned,d=>{const a=[input(),input(),input()];a[0].value=d.player||"";a[1].value=d.club||"";a[2].value=d.infraction||"";addRow("cautionedTableBody",a)});
+  ["A","B"].forEach(t=>{
+   clearAndAdd("subs"+t+"TableBody",r.substitutions?.["team"+t],d=>addSubRow(t,d));
+   clearAndAdd("blood"+t+"TableBody",r.bloodSubs?.["team"+t],d=>addBloodRow(t,d));
+  });
+  alert("Report loaded.");
+ }catch(e){alert("Invalid JSON report.")}
+}
+window.onload=()=>{
+ renderDynamicUI();
+ refreshConfiguredFields();
+ addSubRow("A");addSubRow("B");addBloodRow("A");addBloodRow("B");addCardRow();addSentOffRow();addInjuryRow();
+};
+</script>
+</head>
+<body>
+<div class="nav">
+ <div class="nav-logo">
+  <a href="https://brandfetch.com/gaa.ie?view=library&library=default&collection=logos&asset=idNiChtub1" target="_blank" rel="noopener"><img src="https://brandfetch.com/gaa.ie?view=library&library=default&collection=logos&asset=idNiChtub1" alt="GAA Logo"></a>
+  <span>CUMANN LÚTHCHLEAS GAEL</span>
+ </div>
+ <a onclick="showPage('reportPage')">Report Form</a>
+ <a onclick="showPage('settingsPage')">Advanced Settings</a>
+</div>
+
+<div class="container">
+<div id="reportPage">
+
+<div class="card">
+ <h1 id="reportTitle">Foirm Oifigiúil Tuarascála an Réiteora</h1>
+ <div class="subtitle" id="reportSubtitle">Referee’s Official Report Form</div>
+ <div class="instructions" style="margin-top:14px">
+  <strong>You are requested to:</strong>
+  <ol>
+   <li>Be at the venue one hour before the start of the game.</li>
+   <li>Arrange Umpires for the Match.</li>
+   <li>Complete this form and return it together with team sheets within three days of the match.</li>
+   <li>Any report containing a disciplinary issue must be faxed to 01-865 8650 or e-mailed to brendan.connolly@gaa.ie no later than midday the following day.</li>
+  </ol>
+  <strong>The Referee’s report should be completed accurately, completely and honestly.</strong>
+ </div>
+ <div class="notice"><strong>Result notification:</strong> Please text the result of the fixture to 087-6567689 no more than 1 hour after the game.</div>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2>Cúntas an Réiteora</h2><div class="subtitle">Match and referee details</div></div></div>
+ <div class="row">
+  <div class="col-2"><label>Team A (as Gaeilge)</label><div id="homeTeamContainer"></div></div>
+  <div class="col-2"><label>Team B (as Gaeilge)</label><div id="awayTeamContainer"></div></div>
+ </div>
+ <div class="row">
+  <div class="col-2"><label>Team A took the field at</label><input id="teamATookField" type="time"></div>
+  <div class="col-2"><label>Team B took the field at</label><input id="teamBTookField" type="time"></div>
+ </div>
+ <div class="row">
+  <div class="col-2"><label>Match Started at</label><input id="matchStartedAt" type="time"></div>
+  <div class="col-2"><label>Match Ended at</label><input id="matchEndedAt" type="time"></div>
+ </div>
+ <div class="row">
+  <div class="col-3"><label>Competition</label><input id="competition" value="HE GAA"></div>
+  <div class="col-3"><label>Round</label><input id="round" placeholder="e.g. Round 1"></div>
+  <div class="col-3"><label>Date</label><input id="matchDate" type="date"></div>
+ </div>
+ <div class="row">
+  <div class="col-2"><label>Venue / Ionad</label><input id="venue"></div>
+  <div class="col-2"><label>County / Board</label><input id="countyBoard"></div>
+ </div>
+ <div class="row">
+  <div class="col-2"><label>Ainm (Referee Name)</label><input id="refereeName"></div>
+  <div class="col-2"><label>Seoladh (Address)</label><input id="refereeAddress"></div>
+ </div>
+ <div class="row">
+  <div class="col-2"><label>Throw-in Time</label><input id="throwIn" type="time"></div>
+ </div>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2>Match Officials</h2><div class="subtitle">Linesmen, Sideline Official and Goal Umpires</div></div></div>
+ <table><thead><tr><th>Role</th><th>Name 1</th><th>Name 2</th></tr></thead><tbody id="officialsTableBody"></tbody></table>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2 id="scoreTitle">Final Score</h2></div></div>
+ <div class="row">
+  <div class="col-2"><label>Team A Goals</label><input id="homeGoals" type="number" min="0"></div>
+  <div class="col-2"><label>Team A Points</label><input id="homePoints" type="number" min="0"></div>
+  <div class="col-2"><label>Team B Goals</label><input id="awayGoals" type="number" min="0"></div>
+  <div class="col-2"><label>Team B Points</label><input id="awayPoints" type="number" min="0"></div>
+ </div>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2 id="subsTitle">Ionadaithe – Substitutes</h2><div class="subtitle">Record player on / player off for each team</div></div></div>
+ <h3 style="margin-top:8px">Team A</h3>
+ <table><thead><tr><th>Player On</th><th>Player Off</th><th>Notes / Time</th><th>Actions</th></tr></thead><tbody id="subsATableBody"></tbody></table>
+ <button type="button" class="btn btn-primary no-print" onclick="addSubRow('A')">＋ Add Team A Substitute</button>
+ <h3 style="margin-top:18px">Blood Subs – Team A</h3>
+ <table><thead><tr><th>Player</th><th>Time</th><th>Actions</th></tr></thead><tbody id="bloodATableBody"></tbody></table>
+ <button type="button" class="btn no-print" onclick="addBloodRow('A')">＋ Add Blood Sub</button>
+
+ <h3 style="margin-top:24px">Team B</h3>
+ <table><thead><tr><th>Player On</th><th>Player Off</th><th>Notes / Time</th><th>Actions</th></tr></thead><tbody id="subsBTableBody"></tbody></table>
+ <button type="button" class="btn btn-primary no-print" onclick="addSubRow('B')">＋ Add Team B Substitute</button>
+ <h3 style="margin-top:18px">Blood Subs – Team B</h3>
+ <table><thead><tr><th>Player</th><th>Time</th><th>Actions</th></tr></thead><tbody id="bloodBTableBody"></tbody></table>
+ <button type="button" class="btn no-print" onclick="addBloodRow('B')">＋ Add Blood Sub</button>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2>Imreoirí a ordaítear den bpáirc</h2><div class="subtitle">Details of players ordered off the field — use language of the rule book</div></div><button class="btn btn-primary no-print" onclick="addSentOffRow()">＋ Add Sent-Off Player</button></div>
+ <table><thead><tr><th>Imreoir (Player)</th><th>Contae (County/Club)</th><th>Mí-iompar (Infraction)</th><th>Actions</th></tr></thead><tbody id="sentOffTableBody"></tbody></table>
+ <div class="small-note">
+  A — Immediate Ordering-Off Foul / Infraction (A Red Card).<br>
+  B — Ordering-Off following a second Cautionable Infraction, or a Cautionable Infraction followed by a Cynical Behaviour Infraction in Football.<br>
+  C — Cynical Behaviour Infraction (A Black Card) — Football Only.
+ </div>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2>Imreoirí a fuair rabhadh</h2><div class="subtitle">Details of Players Cautioned</div></div><button class="btn btn-primary no-print" onclick="(function(){const a=[input(),input(),input()];addRow('cautionedTableBody',a)})()">＋ Add Caution</button></div>
+ <table><thead><tr><th>Imreoir (Player)</th><th>Contae (County/Club)</th><th>Mí-iompar (Infraction)</th><th>Actions</th></tr></thead><tbody id="cautionedTableBody"></tbody></table>
+ <div class="small-note">A — Cautionable Foul / Infraction (A Yellow Card).</div>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2>Imreoirí Gorthaithe (Injured Players)</h2><div class="subtitle">Record player, club/county and nature of injury</div></div><button class="btn btn-primary no-print" onclick="addInjuryRow()">＋ Add Injury</button></div>
+ <table><thead><tr><th>Player</th><th>County / Club</th><th>Nature of Injury</th><th>Actions</th></tr></thead><tbody id="injuriesTableBody"></tbody></table>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2 id="commentsTitle">Additional Comments</h2><div class="subtitle">Further details, incidents or clarifications</div></div></div>
+ <textarea id="additionalComments" placeholder="Include any additional comments or details required..."></textarea>
+</div>
+
+<div class="card">
+ <div class="card-header"><div><h2 id="checklistTitle">Match Questions / Checklist</h2><div class="subtitle">Complete each item</div></div></div>
+ <div class="checklist">
+  <div class="check-item"><label>1. If there was any delay in starting what was the cause?</label><textarea id="delay"></textarea></div>
+  <div class="check-item"><label>2. Were players’ jersey numbered in accordance with number of programme?</label><textarea id="jerseys"></textarea></div>
+  <div class="check-item"><label>3. Was the pitch properly marked, and grass cut short enough?</label><textarea id="pitch"></textarea></div>
+  <div class="check-item"><label>4. Have you included the Sideline Official’s Report on Match Regulations as part of your Referee’s Report?</label><textarea id="sidelineReport"></textarea></div>
+  <div class="check-item"><label>Brief comments on stewarding, encroachment onto the pitch by officials, or any other matter on presentation which you feel should be highlighted:</label><textarea id="stewarding"></textarea></div>
+ </div>
+</div>
+
+<div class="card">
+ <div class="row">
+  <div class="col-2"><label>Sínithe (Signature)</label><input id="signature"></div>
+  <div class="col-2"><label>Dáta (Report Date)</label><input id="reportDate" type="date"></div>
+ </div>
+ <div style="margin-top:16px">
+  <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+ </div>
+</div>
+
+<div class="card no-print">
+ <div class="card-header"><div><h2>Save / Load Report</h2><div class="subtitle">Store a completed report as JSON and reload it later</div></div></div>
+ <button type="button" class="btn btn-primary" onclick="saveReportToJson()">Save current report to JSON</button>
+ <button type="button" class="btn" onclick="loadReportFromJson()">Load report from JSON</button>
+ <textarea id="reportJson" placeholder="JSON will appear here. Copy to save, paste to load."></textarea>
+</div>
+
+</div>
+
+<div id="settingsPage" class="hidden">
+<div class="card">
+ <h2>Advanced Settings</h2>
+ <div class="subtitle">Edit team, card, infraction and official dropdown contents.</div>
+ <div class="settings-grid" style="margin-top:14px">
+  <div class="settings-box"><label>Teams</label><input value="Team A, Team B, Team C" oninput="updateModel('teams',this.value)"></div>
+  <div class="settings-box"><label>Venues</label><input value="Venue A, Venue B, Venue C" oninput="updateModel('venues',this.value)"></div>
+  <div class="settings-box"><label>Competitions</label><input value="HE GAA" oninput="updateModel('competitions',this.value)"></div>
+  <div class="settings-box"><label>Rounds</label><input value="Round 1, Round 2, Semi-Final, Final" oninput="updateModel('rounds',this.value)"></div>
+  <div class="settings-box"><label>County / Boards</label><input value="County / Board" oninput="updateModel('countyBoards',this.value)"></div>
+  <div class="settings-box"><label>Referees</label><input value="Referee 1, Referee 2" oninput="updateModel('referees',this.value)"></div>
+  <div class="settings-box"><label>Card types</label><input value="Yellow, Black, Red" oninput="updateModel('cardTypes',this.value)"></div>
+  <div class="settings-box"><label>Infraction categories</label><input value="Category I, Category II, Category III, Category IV, Category V, Category VI" oninput="updateModel('infractions',this.value)"></div>
+  <div class="settings-box"><label>Official roles</label><input value="Linesmen, Sideline Official, Goal Umpires" oninput="updateModel('officialRoles',this.value)"></div>
+ </div>
+</div>
+<div class="card">
+ <h2>Form Settings</h2>
+ <div class="subtitle">Change the lists used by the report. Every item separated by a comma becomes a dropdown option.</div>
+ <div class="settings-grid" style="margin-top:14px">
+  <div class="settings-box"><label>Teams</label><input value="Team A, Team B, Team C" oninput="updateModel('teams',this.value)"><div class="small-note">Used for Team A / Team B.</div></div>
+  <div class="settings-box"><label>Venues</label><input value="Venue A, Venue B, Venue C" oninput="updateModel('venues',this.value)"></div>
+  <div class="settings-box"><label>Competitions</label><input value="HE GAA" oninput="updateModel('competitions',this.value)"></div>
+  <div class="settings-box"><label>Rounds</label><input value="Round 1, Round 2, Semi-Final, Final" oninput="updateModel('rounds',this.value)"></div>
+  <div class="settings-box"><label>County / Boards</label><input value="County / Board" oninput="updateModel('countyBoards',this.value)"></div>
+  <div class="settings-box"><label>Referees</label><input value="Referee 1, Referee 2" oninput="updateModel('referees',this.value)"></div>
+  <div class="settings-box"><label>Card types</label><input value="Yellow, Black, Red" oninput="updateModel('cardTypes',this.value)"></div>
+  <div class="settings-box"><label>Player infraction categories</label><input value="Category I, Category II, Category III, Category IV, Category V, Category VI" oninput="updateModel('infractions',this.value)"></div>
+  <div class="settings-box"><label>Official roles</label><input value="Linesmen, Sideline Official, Goal Umpires" oninput="updateModel('officialRoles',this.value)"></div>
+ </div>
+ <h3 style="margin-top:22px">Form labels</h3>
+ <div class="settings-grid" style="margin-top:12px">
+  <div class="settings-box"><label>Report title</label><input value="Foirm Oifigiúil Tuarascála an Réiteora" oninput="document.querySelector('#reportTitle').textContent=this.value"></div>
+  <div class="settings-box"><label>English subtitle</label><input value="Referee’s Official Report Form" oninput="document.querySelector('#reportSubtitle').textContent=this.value"></div>
+  <div class="settings-box"><label>Score section title</label><input value="Final Score" oninput="document.querySelector('#scoreTitle').textContent=this.value"></div>
+  <div class="settings-box"><label>Substitutes section title</label><input value="Ionadaithe – Substitutes" oninput="document.querySelector('#subsTitle').textContent=this.value"></div>
+  <div class="settings-box"><label>Additional comments title</label><input value="Additional Comments" oninput="document.querySelector('#commentsTitle').textContent=this.value"></div>
+  <div class="settings-box"><label>Checklist title</label><input value="Match Questions / Checklist" oninput="document.querySelector('#checklistTitle').textContent=this.value"></div>
+ </div>
+</div>
+
+<div class="card">
+ <h2>Rule-book infraction reference</h2>
+ <div class="small-note">Use the official rule-book wording when recording disciplinary matters. The category list above is provided for structured entry and can be edited in Advanced Settings.</div>
+ <table>
+  <thead><tr><th>Category</th><th>Reference</th></tr></thead>
+  <tbody>
+   <tr><td>Team Officials — Category Ia</td><td>Abusive language towards a Referee, Umpire, Linesman or Sideline Official.</td></tr>
+   <tr><td>Team Officials — Category IIa</td><td>Any type of physical interference with an Opposing Player or Team Official.</td></tr>
+   <tr><td>Team Officials — Category IIIa</td><td>Minor physical interference, threatening or abusive conduct, or threatening language to a Referee, Umpire, Linesman or Sideline Official.</td></tr>
+   <tr><td>Team Officials — Category IVa</td><td>Any type of assault on a Referee, Umpire, Linesman or Sideline Official.</td></tr>
+   <tr><td>Players — Category I</td><td>Second Cautionable Infraction (Football & Hurling), or Cautionable Infraction followed by Cynical Behaviour Infraction (Football).</td></tr>
+   <tr><td>Players — Category II</td><td>Cynical Behaviour Infraction (Football Only).</td></tr>
+   <tr><td>Players — Category III</td><td>Includes abusive language towards officials, striking/attempting to strike with minimal force, kicking/attempting to kick with minimal force, dangerous behaviour, spitting and contributing to a melee.</td></tr>
+   <tr><td>Players — Category IV</td><td>Includes striking/attempting to strike with force or causing injury, kicking/attempting to kick with force or causing injury, stamping, head strikes and certain assaults.</td></tr>
+   <tr><td>Players — Category V</td><td>Minor physical interference, threatening or abusive conduct, or threatening language to a Referee, Umpire, Linesman or Sideline Official.</td></tr>
+   <tr><td>Players — Category VI</td><td>Any type of assault on a Referee, Umpire, Linesman or Sideline Official.</td></tr>
+  </tbody>
+ </table>
+</div>
+</div>
+</div>
+</body>
+</html>
